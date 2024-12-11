@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>Skill Share: Course Management</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link href="img/icon.png" rel="icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/Frontend/vite-project/assets/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet"> 
+    <link href="css/style.css" rel="stylesheet"> 
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Manage Purchased Courses</h2>
+
+        <form id="purchaseForm" class="mb-4">
+            <div class="mb-3">
+                <label for="courseName" class="form-label">Course Name</label>
+                <input type="text" id="courseName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="buyerName" class="form-label">Buyer's Name</label>
+                <input type="text" id="buyerName" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label for="coursePrice" class="form-label">Course Price</label>
+                <input type="number" id="coursePrice" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="submitButton">Add Purchase</button>
+        </form>
+
+        <h3>Purchased Courses</h3>
+        <table class="table table-bordered" id="purchasesTable">
+            <thead>
+                <tr>
+                    <th>Course Name</th>
+                    <th>Buyer's Name</th>
+                    <th>Course Price</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        let purchases = [];
+        let editMode = false;
+        let currentEditIndex = -1;
+
+        // Function to render purchases in the table
+        function renderPurchases() {
+            console.log('Fetch Data');
+            const xhr=new XMLHttpRequest();
+            xhr.open('GET', 'http://127.0.0.1:5555/course/display', true);
+            xhr.onload = function() {
+                if(xhr.status==200){
+                    const data=JSON.parse(xhr.responseText);
+                    console.log(data); 
+                    const purchasesTable = document.getElementById("purchasesTable").getElementsByTagName("tbody")[0];
+                    purchasesTable.innerHTML = ""; // Clear existing rows
+        
+                    data.forEach((purchase, index) => {
+                        const row = purchasesTable.insertRow();
+                        row.innerHTML = `
+                            <td>${purchase.course_name}</td>
+                            <td>${purchase.buyer_name}</td>
+                            <td>${purchase.course_price}</td>
+                            <td>
+                                <button onclick="editPurchase(${purchase.id},'${purchase.course_name}','${purchase.buyer_name}',${purchase.course_price})" class="btn btn-warning btn-sm">Edit</button>
+                                <button onclick="deletePurchase(${purchase.id})" class="btn btn-danger btn-sm">Delete</button>
+                            </td>
+                        `;
+                    });
+
+                }
+                else{
+                    const data=JSON.parse(xhr.responseText);
+                    console.log(data); 
+                }
+            }
+            xhr.send();
+           
+        }
+        renderPurchases();
+
+        // Event listener for form submission
+        document.getElementById("purchaseForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const courseName = document.getElementById("courseName").value;
+            const buyerName = document.getElementById("buyerName").value;
+            const coursePrice = document.getElementById("coursePrice").value;
+
+            const obj={course_name:courseName,buyer_name:buyerName,course_price:coursePrice};
+            console.log(obj);
+
+            
+
+            const xhr=new XMLHttpRequest();
+            xhr.open('POST', 'http://127.0.0.1:5555/course/save', true);
+            xhr.setRequestHeader('Content-Type','application/json;charset=UTF-8'); 
+            xhr.onload = function() {
+                if(xhr.status==201){
+                    const data=JSON.parse(xhr.responseText);
+                    console.log(data); 
+                    renderPurchases();
+                }
+            }
+            xhr.send(JSON.stringify(obj));
+
+            // Render purchases in the table
+            // renderPurchases();
+
+            // Reset the form
+            event.target.reset();
+        });
+
+        // Edit a purchase
+        function editPurchase(id,courseName,buyerName,coursePrice) {  
+            const courseName1 = prompt("Edit Couse Name :",courseName);
+            const buyerName1 =  prompt("Edit Couse Name :",buyerName);
+            const coursePrice1 =  prompt("Edit Couse Name :",coursePrice);
+
+            const obj={course_name:courseName1,buyer_name:buyerName1,course_price:coursePrice1};
+            console.log(obj);
+
+            const xhr=new XMLHttpRequest();
+            xhr.open('PUT', `http://127.0.0.1:5555/course/update/${id}`, true);
+            xhr.setRequestHeader('Content-Type','application/json;charset=UTF-8'); 
+            xhr.onload = function() {
+                if(xhr.status==200){
+                    const data=JSON.parse(xhr.responseText);
+                    console.log(data); 
+                    window.location.reload();
+                }
+            }
+            xhr.send(JSON.stringify(obj));
+           
+        }
+
+        // Delete a purchase
+        function deletePurchase(id) {
+            
+
+            const xhr=new XMLHttpRequest();
+            xhr.open('DELETE', `http://127.0.0.1:5555/course/delete/${id}`, true);
+            xhr.onload = function() {
+                if(xhr.status==200){
+                    const data=JSON.parse(xhr.responseText);
+                    console.log(data); 
+                    window.location.reload();
+                }
+            }
+            xhr.send();
+        }
+    </script>
+</body>
+
+</html>
